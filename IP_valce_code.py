@@ -1,3 +1,7 @@
+# Compressed Air Cannon
+# This code has been developed by Alberto Natale
+# University of Southampton 2018
+
 import numpy as n
 import matplotlib.pyplot as plt
 import xlsxwriter
