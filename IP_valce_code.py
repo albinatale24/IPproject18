@@ -2,34 +2,35 @@ import numpy as n
 import matplotlib.pyplot as plt
 import xlsxwriter
 
-P0 = 200000                  #in chamber pressure
+P0 = 200000                   #in chamber pressure
 Pb0 = 100000                  #atmospheric pressure
 
 rmax = 0.8                    #valve coefficient
 B = 3.11 * (10**19)           #engineering energy constant
 Cv = 1.93                     #valve coefficient flow coefficient
 Gg = 1                        #gravitational acceleration
+g = 9.81                      #gravity  
 
-T = 293
-Z = 1
-kb = 1.38064852 * (10**-23)
-d = 0.05
+T = 293                       #temperature
+Z = 1                         #constant
+kb = 1.38064852 * (10**-23)   #constant
+d = 0.05                      #ball resting distance from valve opening
 rad = 0.01                    #radius of ball
-A = 3.1416*((rad)**2.0)
-V0 = 0.004
-L = 0.32                       #length of barrel
-Patm = 100000
-m = 0.004
-y = 1.4
-cd = 0.4
 
-angle = 0
-a = n.radians(angle)
-g = 9.81
-yo = 1
+V0 = 0.004                    #chamber volume
+L = 0.32                      #length of barrel
+Patm = 100000                 #atmospheric pressure
+m = 0.004                     #mass of the ball
+y = 1.4                       #air coefficient
+cd = 0                        #drag coefficient  
+ad = 1.225                    #air density  
+
+angle = 0                     #angle of fire 
+yo = 0                        #heigh of fire  
+
+a = n.radians(angle)            
 f = 10*m*g*n.cos(a)*0
-
-ad = 1.225
+A = 3.1416*((rad)**2.0)
 
 acls = []
 diss = []
@@ -39,23 +40,28 @@ def frange(x, y, jump):
     yield x
     x += jump
 
-def vadd(P0, A):
+def vadd(P0):
+    
+    """Function given an initial chamber pressure return cannon exit velocity assuming adiabatic expansion"""
+
     vadd = (((2/m)*(((((P0*V0)/(y-1))*(1-((V0/(A*L+V0))**(y-1)))))-A*L*Patm-L*f-L*m*g*n.sin(a))))**0.5
     return vadd
 
-def vadd2(m, A, Po, Vo, y, L, Pa, f, a, g, yo):
-    vadd = (((2/m)*(((((Po*Vo)/(y-1))*(1-((Vo/(A*L+Vo))**(y-1)))))-A*L*Pa-L*f-L*m*g*n.sin(a))))**0.5
-    return vadd
-
-def viss(m, A, Po, Vo, y, L, Pa, f, a, g, yo):
-    viss = ((2.0/m)*(((Po*Vo)*n.log(1.0+((A*L)/Vo)))-A*L*Pa-L*f-L*m*g*n.sin(a)))**0.5
+def viss(P0):
+    
+    """Function given an initial chamber pressure return cannon exit velocity assuming isothermal expansion"""
+    
+    viss = ((2.0/m)*(((P0*V0)*n.log(1.0+((A*L)/V0)))-A*L*Patm-L*f-L*m*g*n.sin(a)))**0.5
     return viss
 
 def graph_comp():
+    
+    """Function creates a graph comparing Adiabatic, Isothermal and Valve model"""
+    
     p = n.linspace(100000, 600000, 100)
     show_vv = []
-    vad = vadd2(m, A, p, V0, y, L, Patm, f, a, g, yo)
-    vis = viss(m, A, p, V0, y, L, Patm, f, a, g, yo)
+    vad = vadd(P0)
+    vis = viss(P0)
     
     for i in p:
         show_vv.append(loop(i, A))
@@ -71,7 +77,11 @@ def graph_comp():
     plt.savefig('Comparatives Velocities Adibatic vs Isothermal vs Valve.png')
 
 
-def loop(P0, A):
+def loop(P0):
+    
+    """Function given an initial chamber pressure return cannon exit velocity considering valve effect"""
+    
+    
     r0 = (P0 - Pb0) / P0
     Q0 = B * P0 * Cv * (1 - ( r0 / (3*rmax))) * ((r0 / (Gg*T*Z))**0.5)
     """metter q a 0"""
@@ -134,128 +144,9 @@ def loop(P0, A):
         
     return v3dt
 
+
 def distance(v):
+    
+    """Given velocity of firing, function returns distance flew by object """
+    
     return ((v*n.cos(a))/g)*(v*n.sin(a)+(((v*n.sin(a))**2)+2*g*yo)**0.5)  
-    
-    
-vv = loop(P0, A)
-dis = ((vv*n.cos(a))/g)*(vv*n.sin(a)+(((vv*n.sin(a))**2)+2*g*yo)**0.5)  
-
-vvad = vadd(P0, A)
-disad = ((vvad*n.cos(a))/g)*(vvad*n.sin(a)+(((vvad*n.sin(a))**2)+2*g*yo)**0.5) 
-
-"""
-ek = 0.25                  #error coefficient
-adjusted_speed = loop(P0, A)*(ek)
-dissadj = ((adjusted_speed*n.cos(a))/g)*(adjusted_speed*n.sin(a)+(((adjusted_speed*n.sin(a))**2)+2*g*yo)**0.5) 
-"""
-
-
-print('\n', '\n')   
-print(' VALVE', '\n', "Velocity m/s  ", loop(P0, A),'\n',"Distance m    ",  dis,)
-#print('\n', "Adj. Velocity m/s  ", adjusted_speed, '\n', "Adj. Distance m    ",  dissadj,)
-print('\n', '\n')
-print(' ADIABATIC', '\n', "Velocity m/s  ", vadd(P0, A),'\n',"Distance m    ",  disad, '\n')
-    
-"""
-
-#Pressure Velocity Plot
-
-ps = range(150000, 800000, 5000)
-v_val = []
-v_ad = []
-
-for i in ps:
-    v_val.append(loop(i, A))
-    
-for i in ps:
-    v_ad.append(vadd(i, A))
-
-plt.figure(figsize=(9,6))
-plt.plot(ps, v_val, label='Valve Calculated')
-plt.plot(ps, v_ad, label='Adiabatic Expansion')
-plt.xlabel('Pressure Pa',fontsize=14)
-plt.ylabel('Exit Velocity m/s',fontsize=14)
-plt.title('Velocity over Pressure', fontsize=16, fontweight='bold')
-plt.legend(fontsize=12)    
-plt.savefig('Velocity_over_Pressure.png')
-
-   
-#Radius Space
-
-rs = list(frange(0.02, 0.05, 0.0005))
-As = []
-vrad = []
-vrval = []
-
-for i in rs:
-    As.append(3.1416*(i)**2.0)
-
-for i in As:
-    vrad.append(vadd(P0, i))
-
-for i in As:
-    vrval.append(loop(P0, i))
-
-
-plt.figure(figsize=(9,6))
-plt.plot(rs,vrval, label='Valve Calculated')
-plt.plot(rs,vrad, label='Adiabatic Expansion')
-plt.legend(fontsize=12,loc=1)
-plt.xlabel('m', fontsize=14)
-plt.ylabel('m/s', fontsize=14)
-plt.title('Exit Velocity over Ball Radius',fontsize=16, fontweight='bold')
-plt.savefig('Radius_Effect_over_Velocity.png')
-
-"""
-
-
-#Acceleration Space
-
-
-
-plt.figure(figsize=(9,6))
-plt.plot(diss, acls,'g.', markersize=1)
-plt.legend()
-plt.xlabel('Distance in Barrel m', fontsize=15)
-plt.ylabel('Acceleration m/s2', fontsize=15)
-plt.title('Change of Acceleration in the Barrel', fontsize=18)
-plt.savefig('Change of Acceleration in the Barrel.png')
-
-
-
-workbook = xlsxwriter.Workbook('CannonNew1sp.xlsx')
-worksheet = workbook.add_worksheet()
-
-
-"""pressure_range = range(130000, 400000, 5000)"""
-
-#pressure_range = [150000, 200000, 250000, 300000, 350000]
-pressure_range = range(130000, 300000, 2500)
-
-
-row = 0
-for i in pressure_range:
-        vsv = loop(i, A)
-        worksheet.write(row, 0, vsv)
-        worksheet.write(row, 1, distance(vsv))
-        worksheet.write(row, 2, i)
-        row = row + 1
-
-theoretical = []
-practical = [33.6, 45.6, 55.2, 62.4, 69.6]
-
-for i in pressure_range:
-    theoretical.append(loop(i, A))
-    
-plt.figure(figsize=(9,6))
-plt.plot(pressure_range,theoretical,'o--',label='Theoretical')
-plt.plot(pressure_range,practical,'ro--', label='Experimental')
-"""plt.errorbar(pressure_range, practical, yerr=2.4, xerr=10000)"""
-plt.legend(fontsize=14,loc=0)
-plt.xlabel('Pressure Pa', fontsize=15)
-plt.ylabel('Velocity m/s', fontsize=15)
-plt.title('Exit Velocity over Pressures',fontsize=18, fontweight='bold')
-plt.savefig('Comparatives Velocities B.png')
-
-print(theoretical)
