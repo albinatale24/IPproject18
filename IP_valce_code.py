@@ -56,7 +56,7 @@ def graph_comp():
     plt.figure(figsize=(9,6))
     plt.plot(p,vad, label='Adiabatic')
     plt.plot(p,vis, label='Isothermal')
-    plt.plot(p,vlv, label='Valve Model)
+    plt.plot(p,vlv, label='Valve Model')
     plt.legend(fontsize=14)
     plt.xlabel('Pressure Pa', fontsize=15)
     plt.ylabel('Velocity m/s', fontsize=15)
